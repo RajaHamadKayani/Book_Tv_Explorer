@@ -1,0 +1,29 @@
+{
+  "project_info": {
+    "project_number": "351267902527",
+    "project_id": "tv-and-movie-show-explorer",
+    "storage_bucket": "tv-and-movie-show-explorer.firebasestorage.app"
+  },
+  "client": [
+    {
+      "client_info": {
+        "mobilesdk_app_id": "1:351267902527:android:2d04f694d315419d18d48a",
+        "android_client_info": {
+          "package_name": "com.example.tv_and_movie_explorer"
+        }
+      },
+      "oauth_client": [],
+      "api_key": [
+        {
+          "current_key": "AIzaSyDlkVa_o-J9iNd3b152jWOkcXm2PVY5feU"
+        }
+      ],
+      "services": {
+        "appinvite_service": {
+          "other_platform_oauth_client": []
+        }
+      }
+    }
+  ],
+  "configuration_version": "1"
+}
