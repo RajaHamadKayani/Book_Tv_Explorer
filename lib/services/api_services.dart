@@ -360,7 +360,8 @@ class ApiServices {
       throw Exception("❌ Failed to fetch watchlist movies");
     }
   }
-   static Future<bool> isMovieInFavoriteList(int movieId) async {
+
+  static Future<bool> isMovieInFavoriteList(int movieId) async {
     SharedPreferences prefs = await SharedPreferences.getInstance();
     String? sessionId = prefs.getString("session_id");
     String? accountId = prefs.getString("account_id");
@@ -420,9 +421,10 @@ class ApiServices {
         "https://api.themoviedb.org/3/account/$accountId/favorite/movies?api_key=$apiKey&session_id=$sessionId"));
     if (response.statusCode == 200 || response.statusCode == 201) {
       var data = jsonDecode(response.body);
-      if(kDebugMode){
+      if (kDebugMode) {
         print("All favorite movies list is ${data['results']}");
-        print("Length of the favorite movies list is ${data['results'].length}");
+        print(
+            "Length of the favorite movies list is ${data['results'].length}");
       }
       List<MoviesModelClass> list = (data['results'] as List)
           .map((json) => MoviesModelClass.fromMap(json))
@@ -432,32 +434,70 @@ class ApiServices {
       throw Exception("Error while Fetching the favorite movies List");
     }
   }
+
   static Future<bool> removeFromFavorites(int movieId) async {
-  SharedPreferences prefs = await SharedPreferences.getInstance();
-  String? sessionId = prefs.getString('session_id');
-  String? accountId = prefs.getString('account_id');
+    SharedPreferences prefs = await SharedPreferences.getInstance();
+    String? sessionId = prefs.getString('session_id');
+    String? accountId = prefs.getString('account_id');
 
-  if (sessionId == null || accountId == null) {
-    throw Exception("❌ Missing session ID or account ID.");
+    if (sessionId == null || accountId == null) {
+      throw Exception("❌ Missing session ID or account ID.");
+    }
+
+    final response = await http.post(
+      Uri.parse(
+          "https://api.themoviedb.org/3/account/$accountId/favorite?api_key=$apiKey&session_id=$sessionId"),
+      headers: {"Content-Type": "application/json"},
+      body: jsonEncode({
+        "media_type": "movie",
+        "media_id": movieId,
+        "favorite": false // ✅ Set to false to remove from favorites
+      }),
+    );
+
+    if (response.statusCode == 200) {
+      print("✅ Movie removed from favorites!");
+      return true;
+    } else {
+      print("❌ Failed to remove movie: ${response.body}");
+      return false;
+    }
   }
 
-  final response = await http.post(
-    Uri.parse("https://api.themoviedb.org/3/account/$accountId/favorite?api_key=$apiKey&session_id=$sessionId"),
-    headers: {"Content-Type": "application/json"},
-    body: jsonEncode({
-      "media_type": "movie",
-      "media_id": movieId,
-      "favorite": false // ✅ Set to false to remove from favorites
-    }),
-  );
-
-  if (response.statusCode == 200) {
-    print("✅ Movie removed from favorites!");
-    return true;
-  } else {
-    print("❌ Failed to remove movie: ${response.body}");
-    return false;
+  // POST: Rate a movie
+  static Future<bool> rateMovie(int movieId, double rating) async {
+    SharedPreferences sharedPreferences = await SharedPreferences.getInstance();
+    String? sessionId = sharedPreferences.getString("session_id");
+    if (sessionId == null) {
+      if (kDebugMode) {
+        print('Session Id should not be empty');
+      }
+    }
+    final url = Uri.parse(
+        "$baseUrl/movie/$movieId/rating?api_key=$apiKey&session_id=$sessionId");
+    final response = await http.post(
+      url,
+      headers: {"Content-Type": "application/json"},
+      body: jsonEncode({"value": rating}),
+    );
+    if (response.statusCode == 201 || response.statusCode == 200) {
+      print("✅ Movie rated successfully!");
+      return true;
+    } else {
+      print("❌ Failed to rate movie: ${response.body}");
+      return false;
+    }
   }
-}
 
+  // GET: Fetch movie details (includes vote_average & vote_count)
+  static Future<Map<String, dynamic>> getMovieDetails(int movieId) async {
+    final url = Uri.parse("$baseUrl/movie/$movieId?api_key=$apiKey");
+    final response = await http.get(url);
+    if (response.statusCode == 200) {
+      var data = jsonDecode(response.body);
+      return data;
+    } else {
+      throw Exception("Failed to fetch movie details");
+    }
+  }
 }

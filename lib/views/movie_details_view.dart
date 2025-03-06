@@ -1,8 +1,10 @@
 import 'package:flutter/material.dart';
+import 'package:flutter_rating_bar/flutter_rating_bar.dart';
 import 'package:get/get.dart';
 import 'package:google_fonts/google_fonts.dart';
 import 'package:tv_and_movie_explorer/services/api_services.dart';
 import 'package:tv_and_movie_explorer/view_model/controllers/favorites_controller.dart';
+import 'package:tv_and_movie_explorer/view_model/controllers/rating_controller.dart';
 import 'package:tv_and_movie_explorer/view_model/controllers/similar_movies_controller.dart';
 import 'package:tv_and_movie_explorer/view_model/controllers/single_similar_movie_controller.dart';
 import 'package:tv_and_movie_explorer/view_model/controllers/watchlist_controller.dart';
@@ -17,6 +19,8 @@ class MovieDetailsView extends StatefulWidget {
 }
 
 class _MovieDetailsViewState extends State<MovieDetailsView> {
+    final RatingController ratingController = Get.put(RatingController());
+
   FavoritesController favoritesController = Get.put(FavoritesController());
   bool isInWatchlist = false;
   bool isMovieInFavoriteList = false;
@@ -96,9 +100,18 @@ class _MovieDetailsViewState extends State<MovieDetailsView> {
   WatchlistController watchlistController = Get.put(WatchlistController());
   @override
   Widget build(BuildContext context) {
+        ratingController.fetchMovieDetails(widget.movieDetails.id);
+
     return Scaffold(
       appBar: AppBar(title: Text(widget.movieDetails.title)),
-      body: Padding(
+      body: Obx((){
+        if(ratingController.isLoading.value){
+          return Center(
+            child: CircularProgressIndicator(),
+          );
+        }
+        else{
+          return  Padding(
         padding: const EdgeInsets.all(16.0),
         child: SingleChildScrollView(
           child: Column(
@@ -140,6 +153,48 @@ class _MovieDetailsViewState extends State<MovieDetailsView> {
                 "Release Date: ${widget.movieDetails.releaseDate}",
                 style: TextStyle(fontSize: 16, fontWeight: FontWeight.w600),
               ),
+                // Display current average rating and vote count
+              Text(
+                "Current Average Rating: ${ratingController.averageRating.value.toStringAsFixed(1)}",
+                style: TextStyle(fontSize: 18),
+              ),
+              Text(
+                "Based on ${ratingController.voteCount.value} votes",
+                style: TextStyle(fontSize: 14, color: Colors.grey[700]),
+              ),
+              SizedBox(height: 20),
+              // RatingBar for interactive rating
+              RatingBar.builder(
+                initialRating: ratingController.userRating.value,
+                minRating: 1,
+                direction: Axis.horizontal,
+                allowHalfRating: true,
+                itemCount: 10, // For scale 1.0 to 10.0
+                itemPadding: EdgeInsets.symmetric(horizontal: 4.0),
+                itemBuilder: (context, _) => Icon(
+                  Icons.star,
+                  color: Colors.amber,
+                ),
+                updateOnDrag: true,
+                onRatingUpdate: (rating) {
+                  ratingController.userRating.value = rating;
+                },
+              ),
+              SizedBox(height: 20),
+              // Submit button
+              ElevatedButton(
+                onPressed: () async {
+                  double rating = ratingController.userRating.value;
+                  await ratingController.submitRating(widget.movieDetails.id, rating);
+                  Get.snackbar("Success", "Your rating has been submitted!",
+                      snackPosition: SnackPosition.BOTTOM);
+                },
+                child: ratingController.isLoading.value?Center(
+                  child: CircularProgressIndicator(),
+                ):Text("Submit Rating"),
+              ),
+          
+        
               SizedBox(height: 10),
               Text(
                 widget.movieDetails.description,
@@ -225,7 +280,10 @@ class _MovieDetailsViewState extends State<MovieDetailsView> {
             ],
           ),
         ),
-      ),
+      );
+        }
+
+      }),
     );
   }
 

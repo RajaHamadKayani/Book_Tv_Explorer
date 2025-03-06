@@ -6,7 +6,6 @@ import 'package:hive_flutter/adapters.dart';
 import 'package:tv_and_movie_explorer/data/models/favorites_model.dart';
 import 'package:tv_and_movie_explorer/firebase_options.dart';
 import 'package:tv_and_movie_explorer/views/dashboard_view.dart';
-import 'package:tv_and_movie_explorer/views/login_view.dart';
 
 void main() async{
 WidgetsFlutterBinding.ensureInitialized();
@@ -35,7 +34,7 @@ class MyApp extends StatelessWidget {
         colorScheme: ColorScheme.fromSeed(seedColor: Colors.deepPurple),
         useMaterial3: true,
       ),
-      home: LoginView(),
+      home: DashboardView(),
     );
   }
 }
