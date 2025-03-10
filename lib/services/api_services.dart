@@ -500,4 +500,21 @@ class ApiServices {
       throw Exception("Failed to fetch movie details");
     }
   }
+  static Future<String?> fetchTrailerKey(int movieId) async {
+  final url = Uri.parse("https://api.themoviedb.org/3/movie/$movieId/videos?api_key=$apiKey");
+  final response = await http.get(url);
+  if (response.statusCode == 200) {
+    final data = jsonDecode(response.body);
+    List videos = data['results'];
+    // Filter for trailers from YouTube
+    final trailer = videos.firstWhere(
+      (video) => video['site'] == 'YouTube' && video['type'] == 'Trailer',
+      orElse: () => null,
+    );
+    return trailer != null ? trailer['key'] as String : null;
+  } else {
+    throw Exception("Failed to load trailer");
+  }
+}
+
 }

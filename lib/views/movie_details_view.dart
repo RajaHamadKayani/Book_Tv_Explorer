@@ -1,3 +1,4 @@
+import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_rating_bar/flutter_rating_bar.dart';
 import 'package:get/get.dart';
@@ -7,7 +8,9 @@ import 'package:tv_and_movie_explorer/view_model/controllers/favorites_controlle
 import 'package:tv_and_movie_explorer/view_model/controllers/rating_controller.dart';
 import 'package:tv_and_movie_explorer/view_model/controllers/similar_movies_controller.dart';
 import 'package:tv_and_movie_explorer/view_model/controllers/single_similar_movie_controller.dart';
+import 'package:tv_and_movie_explorer/view_model/controllers/video_trailer_controller.dart';
 import 'package:tv_and_movie_explorer/view_model/controllers/watchlist_controller.dart';
+import 'package:tv_and_movie_explorer/views/widgets/youtube_video_player.dart';
 
 // ignore: must_be_immutable
 class MovieDetailsView extends StatefulWidget {
@@ -19,18 +22,29 @@ class MovieDetailsView extends StatefulWidget {
 }
 
 class _MovieDetailsViewState extends State<MovieDetailsView> {
+
     final RatingController ratingController = Get.put(RatingController());
 
   FavoritesController favoritesController = Get.put(FavoritesController());
   bool isInWatchlist = false;
   bool isMovieInFavoriteList = false;
+   
+VideoTrailerController videoTrailerController=Get.put(VideoTrailerController());
 
+   
   @override
   void initState() {
     super.initState();
     ApiServices.authenticateUser();
     checkWatchListStatus();
     checkFavoriteListStatus();
+        videoTrailerController.fetchMovieVideoUrl(widget.movieDetails.id);
+
+       
+        if(kDebugMode){
+          print("trailer url is ${videoTrailerController.videoTrailerUrl.value}");
+        }
+
   }
 
   Future<void> checkWatchListStatus() async {
@@ -117,12 +131,21 @@ class _MovieDetailsViewState extends State<MovieDetailsView> {
           child: Column(
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
-              Center(
-                child: Image.network(
-                  "https://image.tmdb.org/t/p/w500${widget.movieDetails.posterImage}", // ✅ Display poster
-                  height: 300,
-                ),
-              ),
+              // Center(
+              //   child: Image.network(
+              //     "https://image.tmdb.org/t/p/w500${widget.movieDetails.posterImage}", // ✅ Display poster
+              //     height: 300,
+              //   ),
+              // ),
+          Obx(() {
+              if (videoTrailerController.isLoading.value) {
+                return Center(child: CircularProgressIndicator());
+              } else if (videoTrailerController.videoTrailerUrl.value.isEmpty) {
+                return Center(child: Text("No Trailer Available"));
+              } else {
+                return TrailerPlayer(videoKey: videoTrailerController.videoTrailerUrl.value);
+              }
+            }),
               SizedBox(height: 20),
               Row(
                 mainAxisAlignment: MainAxisAlignment.spaceBetween,
